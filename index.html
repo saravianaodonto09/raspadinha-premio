@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raspadinha Especial</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    font-family:Arial, Helvetica, sans-serif;
+    background:linear-gradient(135deg,#ff7eb3,#ff758c);
+}
+
+.card{
+    width:100%;
+    max-width:420px;
+    background:#fff;
+    border-radius:24px;
+    padding:24px;
+    text-align:center;
+    box-shadow:0 15px 40px rgba(0,0,0,.15);
+}
+
+h1{
+    color:#333;
+    margin-bottom:12px;
+}
+
+.subtitulo{
+    color:#666;
+    margin-bottom:20px;
+    line-height:1.5;
+}
+
+.scratch-box{
+    position:relative;
+    width:100%;
+    height:220px;
+    border-radius:18px;
+    overflow:hidden;
+}
+
+.prize{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    padding:20px;
+
+    background:linear-gradient(135deg,#fff5c4,#ffe08a);
+
+    text-align:center;
+
+    color:#7a4a00;
+}
+
+.prize strong{
+    font-size:22px;
+}
+
+.codigo{
+    margin-top:12px;
+    font-size:34px;
+    font-weight:bold;
+    color:#e63946;
+    letter-spacing:3px;
+}
+
+canvas{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+}
+
+.footer{
+    margin-top:15px;
+    color:#999;
+    font-size:13px;
+}
+
+.revelado{
+    opacity:0;
+    transition:opacity .8s ease;
+    pointer-events:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>🎉 Raspadinha Especial 🎉</h1>
+
+    <div class="subtitulo">
+        Raspe a área abaixo para descobrir sua surpresa ❤️
+    </div>
+
+    <div class="scratch-box">
+
+        <div class="prize">
+
+            <div>🎉 PARABÉNS 🎉</div>
+
+            <br>
+
+            <strong>Cafuné Premium Ilimitado</strong>
+
+            <br>
+
+            💆‍♀️❤️💆‍♂️
+
+            <br>
+
+            Retire a versão presencial com o código:
+
+            <div class="codigo">
+                CAFUN3
+            </div>
+
+        </div>
+
+        <canvas id="scratch"></canvas>
+
+    </div>
+
+    <div class="footer">
+        Raspe aproximadamente metade da área ✨
+    </div>
+
+</div>
+
+<script>
+
+const canvas = document.getElementById("scratch");
+const ctx = canvas.getContext("2d");
+
+let desenhando = false;
+let revelado = false;
+
+function iniciar() {
+
+    const largura = canvas.offsetWidth;
+    const altura = canvas.offsetHeight;
+
+    canvas.width = largura;
+    canvas.height = altura;
+
+    ctx.globalCompositeOperation = "source-over";
+
+    const grad = ctx.createLinearGradient(
+        0,0,
+        largura,altura
+    );
+
+    grad.addColorStop(0,"#d9d9d9");
+    grad.addColorStop(1,"#9e9e9e");
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,largura,altura);
+
+    ctx.fillStyle = "#666";
+    ctx.textAlign = "center";
+    ctx.font = "bold 24px Arial";
+
+    ctx.fillText(
+        "RASPE AQUI",
+        largura/2,
+        altura/2
+    );
+
+    ctx.globalCompositeOperation =
+        "destination-out";
+}
+
+function raspar(x,y){
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y,
+        22,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    verificar();
+}
+
+function verificar(){
+
+    if(revelado) return;
+
+    const pixels =
+        ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        ).data;
+
+    let apagados = 0;
+
+    for(let i=3;i<pixels.length;i+=4){
+
+        if(pixels[i] === 0){
+            apagados++;
+        }
+    }
+
+    const percentual =
+        apagados /
+        (pixels.length / 4);
+
+    if(percentual > 0.40){
+
+        revelado = true;
+
+        canvas.classList.add(
+            "revelado"
+        );
+
+        if(navigator.vibrate){
+            navigator.vibrate(200);
+        }
+    }
+}
+
+function pegarPosicao(e){
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+    if(e.touches){
+
+        return {
+            x:
+            e.touches[0].clientX -
+            rect.left,
+
+            y:
+            e.touches[0].clientY -
+            rect.top
+        };
+    }
+
+    return {
+        x:e.clientX - rect.left,
+        y:e.clientY - rect.top
+    };
+}
+
+canvas.addEventListener(
+    "mousedown",
+    () => desenhando = true
+);
+
+canvas.addEventListener(
+    "mouseup",
+    () => desenhando = false
+);
+
+canvas.addEventListener(
+    "mousemove",
+    (e) => {
+
+        if(!desenhando) return;
+
+        const p =
+            pegarPosicao(e);
+
+        raspar(p.x,p.y);
+    }
+);
+
+canvas.addEventListener(
+    "touchstart",
+    () => desenhando = true
+);
+
+canvas.addEventListener(
+    "touchend",
+    () => desenhando = false
+);
+
+canvas.addEventListener(
+    "touchmove",
+    (e) => {
+
+        e.preventDefault();
+
+        if(!desenhando) return;
+
+        const p =
+            pegarPosicao(e);
+
+        raspar(p.x,p.y);
+
+    },
+    { passive:false }
+);
+
+window.addEventListener(
+    "resize",
+    iniciar
+);
+
+iniciar();
+
+</script>
+
+</body>
+</html>
